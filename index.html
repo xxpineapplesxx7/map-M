@@ -1,39 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mia's Favorite Places to Travel</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+<style type="text/css">
+    html,
+body {
+    height: 100%;
+     margin: 0;
+    padding: 0;
+}
 
-    <!DOCTYPE html>
-<html lang="en">
-<!--
-    Author: Mia Contreras
-    Class: Web and Dis Programming 
-    Project: Map Mania 
-    Description: Map Mania 
--->
-    <head>
-        <meta charset="UTF-8">
-        <title>Map Mania </title>
-        <link rel="stylesheet" href="style.css">
-        <script src="script.js"></script>
-        <Style>
-        #myMapID{
-            height: 100%;
-            width: 100%;
+#pano {
+    float: left;
+    height: 100%;
+    width: 100%;
+}
+#floating-panel {
+     position: absolute;
+     top: 10px;
+     left: 25%;
+     z-index: 5;
+     background-color: #fff;
+     padding: 5px;
+     border: 1px solid #999;
+     text-align: center;
+     font-family: "Roboto", "sans-serif";
+     line-height: 30px;
+     padding-left: 10px;
+}
+
+#map{
+    position: absolute;
+    top: 50%;
+    left: 62%;
+    z-index: 5;
+    background-color: #fff;
+     padding: 5px;
+     border: 1px solid #FFFFFF;
+     text-align: center;
+    font-family: "Roboto", "sans-serif";
+    line-height: 30px;
+     padding-left: 10px;
+     height: 45%;
+     width: 35%; 
+}
+</style>
+<script>
+
+    score=0
+
+    var locations = [
+    [ { lat:38.7223,lng:-9.1393 }, {city: 'Lisbon'}],
+    [ { lat:41.9028,lng:12.4964}, {city: 'Rome'}],
+    [ { lat:42.5063 ,lng:1.5218 }, {city: 'Andorra'}],
+    [ { lat:48.8566,lng:2.3522 }, {city: 'Paris'}],
+    [ { lat:51.5072,lng:0.1276  }, {city: 'London'}],
+    [ { lat:38.7223,lng:-86.8515,}, {city: 'Cancun'}],
+    [ { lat:22.8948,lng:-109.8947 }, {city: 'Cabo'}],
+    [ { lat:40.7484,lng:-73.9857 }, {city: 'New York'}],
+    [ { lat:37.8199,lng:-122.4783 }, {city: 'San Francisco'}],
+    [ { lat:38.7223,lng:-9.1393 }, {city: 'Lisbon'}],
+    ]
+
+    function checkDistance() {
+
+        var lat1 = guessMarker.position.lat()
+        var lng1 = guessMarker.position.lng()
+        var lat2 = currentCords.lat
+        var lng2 = currentCords.lng
+
+        var R = 6371; 
+        var dLat = deg2rad(lat2-lat1);
+        var dLng = deg2rad(lng2-lng1);
+        var a =
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLng/2) * Math.sin(dLng/2)
+        ;
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        var distance = R * c;
+        return distance;
+    }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI/180)
         }
-        html, body {
-            height:100%;
-            margin: 0;
-            padding: 0;
-        }
-        </Style>
-
-    </head>
-    <body onload="initApplication">
-        <h1>Map Mania></h1>
-
-        <div id="myMapID"></div>
-
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCXjh-a53VB95DSXVWQCTpOZ-YK0TYOIAE&callback=initMap"
-            async defer>
-        </script>">  
-       
         
-        </body>
+
+   
+
+    function ShowHideMap() {
+        var x = document.getElementById("map");
+        if (x.style.display === "none")
+        {
+            x.style.display = "block";
+        }
+        else
+        {
+            x.style.display = "none";
+        }
+        }
+
+        function playagain() {
+            document.getElementById("mybutton").value = "I'm ready to guess";
+            document.getElementById("mybutton").onclick = function(){ShowHideMap()};
+            played = false;
+            initialize();
+
+        }
+
+        played = false
+
+
+ function initialize() {
+
+    currentLocation = locations[Math.floor(Math.random()*(locations.length))]
+    currentCords = currentLocation[0]
+    currentCity = currentLocation[1].city
+
+    document.getElementById("map").style.display = "none";
+  
+  const panorama = new google.maps.StreetViewPanorama(
+    document.getElementById("pano"),
+    {
+      position: currentCords,
+      pov: {
+        heading: 10,
+        pitch: 5,
+      },
+      linksControl: false,
+      panControl: false,
+      enableCloseButton: false,
+      addressControl: false, 
+      zoomControl: false,
+      showRoadLabels: false,
+    },
+  );
+
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: -0.4716055020859182, lng: -162.42952199916903 },
+        zoom: 1,
+        mapTypeControl: false,
+        streetViewControl: false,
+        minZoom: 1,
+        restriction: {
+            latLngBounds: {
+                north: 80,
+                south: -80,
+                east: 180,
+                west: -180,
+            },
+        },
+    });
+         myInfoWindowLatLng = new google.maps.LatLng( -0.4716055020859182, -162.42952199916903);
+
+         myinfowindow = new google.maps.InfoWindow({
+            position: myInfoWindowLatLng,
+             content: "Zoom & pan then double click to make your guess! ",
+  });
+        myinfowindow.open(map);
+
+        map.addListener("dblclick", (mapsMouseEvent) => {
+
+            if (played === true) {
+                return;
+            }
+
+            guessLatLng = new google.maps.LatLng(mapsMouseEvent.latLng.lat(),mapsMouseEvent.latLng.lng());
+          
+
+            guessMarker = new google.maps.Marker ({
+            position: mapsMouseEvent.latLng,
+            title: "I think I'm here"
+            })
+
+            guessMarker.setMap(map);
+
+            const image = "target.png"
+            targetLatLng =  new google.maps.LatLng (currentCords.lat, currentCords.lng);
+            targetMarker = new google.maps.Marker({
+                position: targetLatLng,
+                title: currentCity,
+                draggable: false,
+                icon: image,
+                anchor: new google.maps.Point(15,15),
+        });
+  
+
+            targetMarker.setMap(map);
+
+            distance = checkDistance();
+
+           myinfowindow.close();
+
+           myinfowindow = new google.maps.InfoWindow({
+        });
+
+        myinfowindow.setContent("Your target was " + currentCity + "</br> You were only " + distance.toFixed(1) + "  km away")
+        myinfowindow.open(map,targetMarker);
+
+        lineCoordinates = [
+            targetLatLng,
+            guessLatLng,
+        ];
+        linePath= new google.maps.Polyline({
+            path: lineCoordinates,
+            geodesic: true,
+            strokeColor: "FF0000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+         });
+
+        linePath.setMap(map);
+
+        played = true; 
+
+        document.getElementById("mybutton").value = "CONGRATS!!! Play again? ";
+        document.getElementById("mybutton").onclick = function() {playagain()};
+
+        });
+
+
+}
+
+window.initialize = initialize;
+</script>
+</head>
+<body>
+  <div id="pano"></div>
+    <div id="floating-panel">
+        <input
+            type="button"
+            id="mybutton"
+            value="I'm ready to make my guess!"
+            onclick="ShowHideMap();"
+        />
+    </div>
+
+    <div id="map"></div>
+  <script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuKfs5AN92DykmD1-NiD-w5b7vG6V1n7Q&callback=initialize&v=weekly"
+  defer
+></script>
+</body>
 </html>
